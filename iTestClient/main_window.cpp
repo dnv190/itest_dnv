@@ -174,6 +174,7 @@ void MainWindow::setCurrentQuestion()
                 QSize minimum_size = svg_widget->sizeHint();
                 minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
                 svg_widget->setMinimumSize(minimum_size);
+				svg_widget->setMaximumSize(minimum_size);
                 svg_widget->load(item->svg(i).toUtf8());
                 /*if (svg_widget->renderer()->defaultSize().height() + 40 > h)
                     { h = svg_widget->renderer()->defaultSize().height() + 40; }*/
