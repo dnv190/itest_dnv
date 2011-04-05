@@ -117,6 +117,7 @@ void AnswersEdit::setAnswers(const QStringList & answers)
             ans->setVisible(false);
         }
     }
+
     enableAddAnswerButton();
 }
 

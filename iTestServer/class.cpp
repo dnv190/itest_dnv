@@ -22,6 +22,7 @@
 ClassMember::ClassMember()
 {
     ms_name = "";
+
 }
 
 ClassMember::ClassMember(const QString & name)

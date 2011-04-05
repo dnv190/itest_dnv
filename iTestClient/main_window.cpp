@@ -19,7 +19,7 @@
 
 #include "../shared/about_widget.h"
 #include "main_window.h"
-
+#include "../shared/bitmapwidget.h"
 MainWindow::MainWindow()
 {
     varinit();
@@ -169,16 +169,35 @@ void MainWindow::setCurrentQuestion()
         if (item->numSvgItems() > 0) {
             svgDisplayWidget->setVisible(true);
             //int h = 0;
-            for (int i = 0; i < item->numSvgItems(); ++i) {
-                QSvgWidget * svg_widget = new QSvgWidget;
-                QSize minimum_size = svg_widget->sizeHint();
-                minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
-                svg_widget->setMinimumSize(minimum_size);
-				svg_widget->setMaximumSize(minimum_size);
-                svg_widget->load(item->svg(i).toUtf8());
-                /*if (svg_widget->renderer()->defaultSize().height() + 40 > h)
-                    { h = svg_widget->renderer()->defaultSize().height() + 40; }*/
-                svgDisplayWidget->addWidget(svg_widget, item->svgName(i), true);
+            for (int i = 0; i < item->numSvgItems(); ++i)
+            {
+                QSvgRenderer temp(item->svg(i).toUtf8());
+                if ( temp.isValid() )
+                {
+                    QSvgWidget * svg_widget = new QSvgWidget;
+                    QSize minimum_size = svg_widget->sizeHint();
+                    minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
+                    svg_widget->setMinimumSize(minimum_size);
+
+                    svg_widget->setMaximumSize(minimum_size);
+                    svg_widget->load(item->svg(i).toUtf8());
+                      svgDisplayWidget->addWidget(svg_widget, item->svgName(i), true);
+
+                }
+                else    //it's bitmap picture
+                {
+
+                         BitmapWidget *bit_widget = new BitmapWidget;
+                         QSize minimum_size(128,128);
+                         minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
+                         bit_widget->setMinimumSize(minimum_size);
+
+                          bit_widget->setMaximumSize(minimum_size);
+                          bit_widget->load(item->svg(i).toUtf8());
+                          svgDisplayWidget->addWidget(bit_widget, item->svgName(i), true);
+                }
+
+
             }
             //if (h < 168) { h = 168; }
             qApp->processEvents();
@@ -223,24 +242,52 @@ void MainWindow::lastQuestion()
 void MainWindow::previewSvg(const QString & link)
 {
     if (!LQListWidget->currentIndex().isValid()) { return; }
-	QuestionItem * item = current_test_questions.value(LQListWidget->currentItem());
-	if (item == NULL) { return; }
+        QuestionItem * item = current_test_questions.value(LQListWidget->currentItem());
+        if (item == NULL) { return; }
     int i_link = link.toInt();
-	if (i_link < 0 || i_link >= item->numSvgItems()) { return; }
-    QSvgWidget * svg_widget = new QSvgWidget;
-	svg_widget->setAttribute(Qt::WA_DeleteOnClose);
-	svg_widget->setParent(this);
-#ifndef Q_WS_MAC
-	svg_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint);
-#else
-	svg_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint);
-#endif
-	svg_widget->setWindowTitle(item->svgName(i_link));
-	QSize minimum_size = svg_widget->sizeHint();
-	minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
-	svg_widget->setMinimumSize(minimum_size);
-	svg_widget->load(item->svg(i_link).toUtf8());
-	svg_widget->show();
+        if (i_link < 0 || i_link >= item->numSvgItems()) { return; }
+        QSvgRenderer temp(item->svg(i_link).toUtf8());
+        if( temp.isValid() )
+        {
+            QSvgWidget * svg_widget = new QSvgWidget;
+                svg_widget->setAttribute(Qt::WA_DeleteOnClose);
+                svg_widget->setParent(this);
+        #ifndef Q_WS_MAC
+                svg_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint);
+        #else
+                svg_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint);
+        #endif
+                svg_widget->setWindowTitle(item->svgName(i_link));
+                QSize minimum_size = svg_widget->sizeHint();
+                minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
+                svg_widget->setMinimumSize(minimum_size);
+             //   svg_widget->setMaximumSize(minimum_size);
+                svg_widget->load(item->svg(i_link).toUtf8());
+                svg_widget->show();
+        }
+        else //bitmap
+        {
+            BitmapWidget *bit_widget = new BitmapWidget;
+
+               bit_widget->setAttribute(Qt::WA_DeleteOnClose);
+               bit_widget->setParent(this);
+        #ifndef Q_WS_MAC
+                bit_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint);
+        #else
+                bit_widget->setWindowFlags(Qt::Dialog | Qt::WindowMaximizeButtonHint | Qt::WindowStaysOnTopHint | Qt::WindowSystemMenuHint);
+        #endif
+                bit_widget->setWindowTitle(item->svgName(i_link));
+
+                QSize minimum_size(128,128);
+                minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
+                bit_widget->setMinimumSize(minimum_size);
+
+            //   bit_widget->setMaximumSize(minimum_size);
+
+                bit_widget->load(item->svg(i_link).toUtf8());
+                bit_widget->show();
+        }
+
 }
 
 void MainWindow::finish()

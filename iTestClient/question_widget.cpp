@@ -18,7 +18,7 @@
 ********************************************************************/
 
 #include "question_widget.h"
-
+#include "../shared/bitmapwidget.h"
 void QuestionWidget::init(QuestionItem * item, bool highlight_correct_answers)
 {
     QHBoxLayout * mainhlayout = new QHBoxLayout(this);
@@ -84,14 +84,30 @@ void QuestionWidget::init(QuestionItem * item, bool highlight_correct_answers)
         font.setUnderline(item->answered().testFlag(Question::indexToAnswer(ans_order.at(i) + 1)));
         qw_lbl_answers.at(i)->setFont(font);
     }
-    for (int i = 0; i < item->numSvgItems(); ++i) {
-        QSvgWidget * svg_widget = new QSvgWidget;
-        svg_widget->load(item->svg(i).toUtf8());
-        QSize svg_size = svg_widget->sizeHint();
-        svg_size.scale(48, 48, Qt::KeepAspectRatioByExpanding);
-        svg_widget->setMinimumSize(svg_size);
-        svg_widget->setMaximumSize(svg_size);
-        qw_msw_svgs->addWidget(svg_widget, item->svgName(i), false);
+    for (int i = 0; i < item->numSvgItems(); ++i)
+    {
+        QSvgRenderer test(item->svg(i).toUtf8());
+        if ( test.isValid() )
+        {
+            QSvgWidget * svg_widget = new QSvgWidget;
+            svg_widget->load(item->svg(i).toUtf8());
+            QSize svg_size = svg_widget->sizeHint();
+            svg_size.scale(48, 48, Qt::KeepAspectRatioByExpanding);
+            svg_widget->setMinimumSize(svg_size);
+            svg_widget->setMaximumSize(svg_size);
+            qw_msw_svgs->addWidget(svg_widget, item->svgName(i), false);
+        }
+        else    //it's bitmap picture
+        {
+                BitmapWidget *bit_widget = new BitmapWidget;
+                bit_widget->load(item->svg(i).toUtf8());
+                QSize minimum_size(48,48);
+                minimum_size.scale(48, 48, Qt::KeepAspectRatioByExpanding);
+                bit_widget->setMinimumSize(minimum_size);
+                bit_widget->setMaximumSize(minimum_size);
+                qw_msw_svgs->addWidget(bit_widget, item->svgName(i), false);
+        }
+
     }
     if (item->numSvgItems() < 1) { qw_msw_svgs->setVisible(false); }
 }

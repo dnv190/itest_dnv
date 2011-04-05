@@ -33,10 +33,17 @@ QListWidgetItem(0, QListWidgetItem::UserType)
 
 bool SvgItem::setSvg(QString svg)
 {
+
     svg.remove("\n");
     QSvgRenderer svgrenderer(svg.toUtf8());
-    if (!svgrenderer.isValid()) { return false; }
-    else { si_valid = true; }
+    if (!svgrenderer.isValid())
+    {
+        return SetBitmap(svg);
+    }
+    else
+    {
+        si_valid = true;
+    }
     QPixmap pixmap(64, 64);
     QPainter painter(&pixmap);
     painter.save();
@@ -48,6 +55,30 @@ bool SvgItem::setSvg(QString svg)
     setIcon(QIcon::QIcon(pixmap));
     si_svg = svg;
     return true;
+}
+bool SvgItem::SetBitmap(QString bitmap)
+{
+    QImage image;
+    QByteArray array = QByteArray::fromBase64(bitmap.toUtf8());
+    if( !image.loadFromData(array))
+    {
+        return false;
+    }
+    else
+    {
+        si_valid = true;
+    }
+   QPixmap pixmap(64, 64);
+   QPainter painter(&pixmap);
+   painter.save();
+   painter.setPen(Qt::NoPen);
+   painter.setBrush(QColor(Qt::white));
+   painter.drawRect(QRect(0, 0, 64, 64));
+   painter.restore();
+   painter.drawImage(QRect(0,0,64,64),image);
+   setIcon(QIcon::QIcon(pixmap));
+   si_svg = bitmap;
+   return true;
 }
 
 QString SvgItem::svg() { return si_svg; }

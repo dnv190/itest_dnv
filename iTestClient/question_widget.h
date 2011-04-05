@@ -21,7 +21,7 @@
 #define QUESTION_WIDGET_H
 
 #include <QSvgWidget>
-
+#include <QSvgRenderer>
 #include "mtmultisvgwidget.h"
 #include "../shared/pass_mark.h"
 
