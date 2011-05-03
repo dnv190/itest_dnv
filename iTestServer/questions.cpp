@@ -543,16 +543,16 @@ void MainWindow::addSvg()
     //QMessageBox::show(QString("fuck"))
     QString file_name = QFileDialog::getOpenFileName(this, tr("Add SVG"), "", tr("Scalable Vector Graphics (*.svg);;All files (*.*)"));
 
-    if (file_name.isEmpty()) { return; }
-    QFile file(file_name);
-    if (!file.open(QFile::ReadOnly | QFile::Text))
-    { QMessageBox::critical(this, tr("Add SVG"), tr("Cannot read file %1:\n%2.").arg(file_name).arg(file.errorString())); return; }
-    QFileInfo file_info(file_name); bool ok;
-    QString svg_name = QInputDialog::getText(this, tr("Add Image"), tr("Attachment name:"), QLineEdit::Normal, file_info.baseName(), &ok);
-    if (!ok || svg_name.isEmpty()) { return; }
 
     if( file_name.endsWith(".SVG", Qt::CaseInsensitive))//check for svg format
     {
+        if (file_name.isEmpty()) { return; }
+        QFile file(file_name);
+        if (!file.open(QFile::ReadOnly | QFile::Text))
+        { QMessageBox::critical(this, tr("Add SVG"), tr("Cannot read file %1:\n%2.").arg(file_name).arg(file.errorString())); return; }
+        QFileInfo file_info(file_name); bool ok;
+        QString svg_name = QInputDialog::getText(this, tr("Add Image"), tr("Attachment name:"), QLineEdit::Normal, file_info.baseName(), &ok);
+        if (!ok || svg_name.isEmpty()) { return; }
 
         QTextStream in(&file);
         SvgItem * svg = new SvgItem(svg_name, in.readAll());
@@ -560,17 +560,21 @@ void MainWindow::addSvg()
         SQSVGListWidget->addItem(svg);
 
     }
-    else
+    else//bitmap
     {
+        if (file_name.isEmpty()) { return; }
+        QFile file(file_name);
+        if (!file.open(QFile::ReadOnly))
+        { QMessageBox::critical(this, tr("Add SVG"), tr("Cannot read file %1:\n%2.").arg(file_name).arg(file.errorString())); return; }
+        QFileInfo file_info(file_name); bool ok;
+        QString svg_name = QInputDialog::getText(this, tr("Add Image"), tr("Attachment name:"), QLineEdit::Normal, file_info.baseName(), &ok);
+        if (!ok || svg_name.isEmpty()) { return; }
 
-       // QByteArray array = file.readAll();
+        QByteArray array = file.readAll();
+       array = array.toBase64();
+        QString temp(array);
 
-       // array = array.toBase64();
-       //    QString fi(array);
-
-
-         QTextStream in(&file);
-        SvgItem * svg = new SvgItem(svg_name, in.readAll());
+        SvgItem * svg = new SvgItem(svg_name, temp);
         if (!svg->isValid()) { QMessageBox::critical(this, tr("Add SVG"), tr("Unable to parse file %1.").arg(file_name)); }
         SQSVGListWidget->addItem(svg);
     }
