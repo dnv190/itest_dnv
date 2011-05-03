@@ -189,14 +189,14 @@ sfile << "\t<answers";
                 // Statistics
                 if (db_version < 1.2) { if (rfile.readLine() != "[Q_ICNT]")return; }
                 else { if (rfile.readLine() != "[Q_ICCNT]")return; }
-               rfile.readLine();
+                sfile << "<ads icnt=\""<< rfile.readLine()<<"\" ";
                 if (db_version < 1.2) { if (rfile.readLine() != "[Q_CCNT]")return; }
-               rfile.readLine();
+               sfile << "ccnt=\""<< rfile.readLine()<<"\" ";
                 // Hidden
                 if (db_version >= 1.2) {
                         if (rfile.readLine() != "[Q_HID]")return;
-                        rfile.readLine();
-                }
+                        sfile << "hidden=\""<< rfile.readLine()<<"\"/>";
+                    }else sfile <<"/>";
                 if (db_version > 1.25) {
                         // SVG
                         if (rfile.readLine() != "[Q_SVG]")return;
@@ -239,6 +239,7 @@ void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDB
     QFile f(saveDBName);
     if (!f.open(QFile::WriteOnly | QFile::Text))return;
     QTextStream file(&f);
+    if(useCP1250)file.setCodec("CP 1250");else file.setCodec("UTF-8");
 double db_version=d.attribute("database_version", "1.4").toDouble();
     file << "[ITEST_VERSION]\n";// << d.attribute("itest_version", "1.42") << "\n";
     file << "[ITEST_DB_VERSION]\n" << d.attribute("database_version", "1.4") << "\n";
@@ -288,8 +289,8 @@ if(db_version>=1.35)file << "[DB_CNUM]\n0\n";
             }
         }
 
-        file << (db_version<1.2?"[Q_ICNT]":"[Q_ICCNT]")<<"\n0\n"<<(db_version<1.2?"[Q_CCNT]":"")<<"\n0\n";
-    if(db_version>=1.2)file <<"[Q_HID]\nfalse\n";
+        file << (db_version<1.2?"[Q_ICNT]":"[Q_ICCNT]")<<"\n"<< n.firstChildElement("ads").attribute("icnt") <<"\n"<<(db_version<1.2?"[Q_CCNT]\n":"")<< n.firstChildElement("ads").attribute("ccnt") <<"\n";
+    if(db_version>=1.2)file <<"[Q_HID]\n"<< n.firstChildElement("ads").attribute("hidden") <<"\n";
     if(db_version>=1.25){
         file<< "[Q_SVG]\n"<<n.firstChildElement("images").elementsByTagName("image").count()<<"\n";
         for(int i=0;i<n.firstChildElement("images").elementsByTagName("image").count();i++)file<<n.firstChildElement("images").elementsByTagName("image").at(i).toElement().attribute("caption", "unnamed image") <<"\n"<< n.firstChildElement("images").elementsByTagName("image").at(i).toElement().text() <<"\n";
