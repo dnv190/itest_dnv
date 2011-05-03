@@ -579,7 +579,6 @@ void MainWindow::addSvg()
         SQSVGListWidget->addItem(svg);
     }
 
-
 }
 
 void MainWindow::removeSvg()
@@ -658,13 +657,32 @@ void MainWindow::exportSvg()
     if (!LQListWidget->currentIndex().isValid()) { return; }
 	if (!SQSVGListWidget->currentIndex().isValid()) { return; }
 	SvgItem * svg_item = (SvgItem *)SQSVGListWidget->currentItem();
-	QString file_name = QFileDialog::getSaveFileName(this, tr("Export SVG"), QString("%1.svg").arg(svg_item->text()), tr("Scalable Vector Graphics (*.svg)"));
-	if (file_name.isEmpty()) { return; }
-	QFile file(file_name);
-	if (!file.open(QFile::WriteOnly | QFile::Text))
-    { QMessageBox::critical(this, tr("Export SVG"), tr("Cannot write file %1:\n%2.").arg(file_name).arg(file.errorString())); return; }
-    QTextStream out(&file);
-	out << svg_item->svg();
+
+        QSvgRenderer temp(svg_item->svg().toUtf8());
+        if ( temp.isValid() )
+        {
+            //if()
+            QString file_name = QFileDialog::getSaveFileName(this, tr("Export SVG"), QString("%1.svg").arg(svg_item->text()), tr("Scalable Vector Graphics (*.svg)"));
+            if (file_name.isEmpty()) { return; }
+            QFile file(file_name);
+            if (!file.open(QFile::WriteOnly | QFile::Text))
+           { QMessageBox::critical(this, tr("Export SVG"), tr("Cannot write file %1:\n%2.").arg(file_name).arg(file.errorString())); return; }
+            QTextStream out(&file);
+            out << svg_item->svg();
+        }
+        else
+        {
+            QImage image;
+             QByteArray array = QByteArray::fromBase64(svg_item->svg().toUtf8());
+
+            if( !image.loadFromData(array))
+            {
+                return ;
+            }
+             QString file_name = QFileDialog::getSaveFileName(this, tr("Export bitmap"), QString("%1.jpg").arg(svg_item->text()), tr("JPG (*.jpg)"));
+             image.save(file_name);
+        }
+
 }
 
 void MainWindow::currentSvgChanged()
