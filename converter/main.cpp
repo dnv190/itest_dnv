@@ -1,0 +1,406 @@
+#include <QtGui/QTextEdit>
+#include <QtGui/QImage>
+#include <QtCore/QCoreApplication>
+#include <QtXml>
+#include <QFile>
+#include <QDir>
+#include <QSet>
+#include <QList>
+#include <QTimer>
+#include <QMap>
+#include <QDataStream>
+#include <QByteArray>
+#include <QBuffer>
+#include <QTranslator>
+#include <QQueue>
+#include <QProcess>
+#include <QSvgWidget>
+#include <QUrl>
+#include <qtextstream.h>
+#include <QSvgRenderer>
+#include <iostream>
+using namespace std;
+//opendbname - old db
+void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName, bool ptflag);
+//savename - old db
+void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName);
+//returns newfilename
+QString imgtof(QString image, QString filename){
+   QSvgRenderer r(QByteArray(image.toUtf8()));
+//image.resize(20);
+   //cout << image.toStdString() << endl<<filename.toStdString() << "***"<<endl;
+    if (r.isValid())
+    {
+
+    //if()
+    QFile file(filename+".svg");
+    if (!file.open(QFile::WriteOnly | QFile::Text))return NULL;
+    QTextStream o(&file);
+
+    o << image;
+    return QString(filename+".svg");
+    }
+    else
+    {
+    QImage im;
+    QByteArray array = QByteArray::fromBase64(image.toUtf8());
+    if( !im.loadFromData(array))
+    {
+    return NULL;
+    }
+    im.save(filename+".jpg");
+
+    return QString(filename+".jpg");
+    }
+};
+
+QString ftoimg(QString filename){
+
+   QString result("");  QSvgRenderer r;
+    try{
+   r.load(filename);}catch(...){};
+    if (r.isValid())
+    {
+
+    QFile file(filename);
+    if (!file.open(QFile::ReadOnly | QFile::Text))return NULL;
+    QTextStream o(&file);
+
+    result=o.readLine();
+    file.close();
+    return result;
+    }
+    else
+    {
+        QImage im(filename);
+        QByteArray ar;
+        QBuffer buf(&ar);
+        im.save(&buf, "JPEG");
+
+        return ar.toBase64();
+
+//        QFile file(filename);
+//        if (!file.open(QFile::ReadOnly))return NULL;
+//        QDataStream o(&file);
+//        char *buf=new char[file.size()];
+//        uint sz=(uint)(file.size());
+//        printf("!%d!", sz);
+//        o.readRawData(buf, sz);
+//        QByteArray ar(buf);
+//        delete[]buf;
+//        //cout<< artoStdString();
+//        return ar.toBase64();
+    }
+};
+
+int main(int argc, char *argv[])
+{
+
+if(strcmp(argv[1],"-u")==0){
+ bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
+ bool ptflag=argc>=5 &&(strcmp(argv[4], "-pt")==0 || strcmp(argv[5], "-pt")==0);
+ upgrade(argv[2],cpflag,argv[3],ptflag);
+}else
+    if(strcmp(argv[1], "-d")==0){
+        bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
+        downgrade(argv[2],cpflag,argv[3]);
+    }else printf("\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u \"old-format-filename\" \"new-format-filename\" [-ocp] [-pt]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using, -pt flag means comments and questions text to be converted into plain text)\n\n\tconverter -u \"new-format-filename\" \"old-format-filename\" [-oc]\n\t\tDowngrading file format to old n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!\n");
+return 0;
+}
+
+QString esc(QString toesc){
+    return toesc.replace(">","&gt;").replace("<","&lt;");
+}
+
+
+QString toplain(QString html){
+QTextDocument doc;
+doc.setHtml(html);
+return doc.toPlainText();
+};
+
+void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName, bool ptflag)
+{
+
+    QFileInfo x(saveDBName);
+    QDir x2(x.dir());
+
+    x2.mkdir(QString("img"));
+    x2.cd(QString("img"));
+    QString dir(x2.path());
+
+    QFile file1(saveDBName);
+    if (!file1.open(QFile::WriteOnly | QFile::Text)) {
+return;
+    }
+    QTextStream sfile(&file1);
+    sfile <<"<?xml version=\"1.0\" encoding=\"";
+
+    if (openDBName.isNull())return;
+
+        QFile file2(openDBName);
+    if (!file2.open(QFile::ReadOnly | QFile::Text))
+    {
+return;
+    }
+     // PROGRESS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    QTextStream rfile(&file2);
+        if (useCP1250) {         sfile.setCodec("CP 1250");sfile << "CP1250\"?>\n";
+rfile.setCodec("CP 1250"); }
+        else {         sfile.setCodec("UTF-8");
+rfile.setCodec("UTF-8");sfile << "UTF-8\"?>\n"; }
+sfile << "<database ";
+    QString db_buffer; QStringList bufferlist;
+    // ---------------------------------------------------------------------
+        if (rfile.readLine() != "[ITEST_VERSION]")return;
+      sfile << "itest_version=\"" << rfile.readLine() << "\" ";
+if (rfile.readLine() != "[ITEST_DB_VERSION]")return;
+QString tmp="";
+tmp=rfile.readLine();
+double db_version=tmp.toDouble();
+sfile << "database_version=\"" << tmp << "\" ";
+int ii=0;
+        if (!useCP1250) {
+                if ( db_version == 1.0) { upgrade(openDBName, true, saveDBName, ptflag);return; }
+        }
+
+    if (rfile.readLine() != "[DB_NAME]")return;
+    // Database name
+    sfile << "name=\"" << esc(rfile.readLine()) << "\" ";
+
+    if (rfile.readLine() != "[DB_DATE]")return;
+    // Database date
+    sfile << "created=\"" << esc(rfile.readLine()) << "\">\n";
+        if (rfile.readLine() != "[DB_DATE_ULSD]")return;
+        // Use last save date
+        (rfile.readLine() == "true");
+if (rfile.readLine() != "[DB_COMMENTS]")return;
+// Database comments
+if(ptflag)
+sfile << "\t<comment>" << toplain(rfile.readLine()) << "</comment>\n";
+else sfile << "\t<comment>" << esc(rfile.readLine()) << "</comment>\n";
+
+
+if (rfile.readLine() != "[DB_QNUM]")return;
+// Question number
+int db_qnum = rfile.readLine().toInt();
+if (rfile.readLine() != "[DB_SNUM]")return;
+// Number of saved sessions
+rfile.readLine().toInt();
+int db_cnum = 0;
+if (db_version >= 1.35) {
+    if (rfile.readLine() != "[DB_CNUM]")return;
+    // Number of classes
+    db_cnum = rfile.readLine().toInt();
+}
+
+if (rfile.readLine() != "[DB_FLAGS]")return;
+ // PROGRESS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// Flags enabled
+db_buffer = rfile.readLine();
+sfile << "\t<flags>\n";
+
+QVector<bool> db_fe(db_buffer.length());
+for (int i = 0; i < db_fe.size(); ++i) {
+                if (db_buffer.at(i) == '+') { db_fe[i] = true;} else if (db_buffer.at(i) == '-')
+                { db_fe[i] = false; } else return;
+};
+// Flags
+QVector<QString> db_f(db_buffer.length());
+for (int i = 0; i < db_f.size(); ++i) {
+                if (rfile.readLine() != QString("[DB_F%1]").arg(i))return;
+                db_f[i] = rfile.readLine();
+sfile <<"\t\t<flag number=\""<<i<<"\">"<<esc(db_f[i])<<"</flag>\n";
+}
+sfile << "\t</flags>\n";
+// End of flags
+if (rfile.readLine() != "[DB_FLAGS_END]")return;
+// PROGRESS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+// Questions
+ QStringList answers; sfile << "\t<questions count=\""<<db_qnum<<"\">\n";
+for (int i = 0; i < db_qnum; ++i) {
+                answers.clear();
+                // Question name
+                if (rfile.readLine() != "[Q_NAME]")return;
+                sfile << "\t\t<question name=\"" << esc(rfile.readLine()) <<"\" ";
+                // Flag
+                if (rfile.readLine() != "[Q_FLAG]")return;
+                sfile << "flag=\"" << esc(rfile.readLine()) <<"\" ";
+                if (db_version >= 1.2) {
+                        // Question group
+                        if (rfile.readLine() != "[Q_GRP]")return;
+                        sfile << "group=\"" << esc(rfile.readLine()) <<"\" ";
+                }
+                // Difficulty
+                if (db_version >= 1.2) { if (rfile.readLine() != "[Q_DIF]")return; }
+                else { if (rfile.readLine() != "[Q_DIFFICULTY]")return; }
+                sfile << "difficulty=\"" << esc(rfile.readLine()) <<"\">\n";
+                // Question text
+                if (rfile.readLine() != "[Q_TEXT]")return;
+                if(ptflag)
+                    sfile << "\t\t\t<text>" << toplain(rfile.readLine()) <<"</text>\n";
+                else  sfile << "\t\t\t<text>" << esc(rfile.readLine()) <<"</text>\n";
+sfile << "\t<answers";
+    if (db_version >= 1.35) {
+        // Answers
+        if (rfile.readLine() != "[Q_ANS]")return;
+        sfile << " selectiontype=\"" << esc(rfile.readLine()) <<"\" ";
+        sfile << " correctanswers=\"" << esc(rfile.readLine()) <<"\">\n";
+        int numanswers = rfile.readLine().toInt();
+                        for (int a = 0; a < numanswers; ++a) { tmp=rfile.readLine();answers << tmp;sfile <<"\t\t\t<answer>" << esc(tmp) << "</answer>\n"; }
+        // Explanation
+        if (rfile.readLine() != "[Q_EXPL]")return;
+        sfile<< "\t\t<explain>"<<esc(rfile.readLine())<<"</explain>\n";
+    } else {
+        // Answer A
+        if (rfile.readLine() != "[Q_ANSA]")return;
+        tmp=rfile.readLine();
+        answers << tmp;
+        if (db_version < 1.2) { if (rfile.readLine() != "[Q_ANSA_C]")return; }
+        sfile << "\t\t<answer correct=\""<< (rfile.readLine()=="true"?"true":"false") <<"\">"<< esc(tmp) <<"</answer>\n";
+        // Answer B
+        if (rfile.readLine() != "[Q_ANSB]")return;
+        tmp=rfile.readLine();
+        answers << tmp;
+        if (db_version < 1.2) { if (rfile.readLine() != "[Q_ANSB_C]")return; }
+        sfile << "\t\t<answer correct=\""<< (rfile.readLine()=="true"?"true":"false") <<"\">"<< esc(tmp) <<"</answer>\n";
+        // Answer C
+        if (rfile.readLine() != "[Q_ANSC]")return;
+        tmp=rfile.readLine();
+        answers << tmp;
+        if (db_version < 1.2) { if (rfile.readLine() != "[Q_ANSC_C]")return; }
+        sfile << "\t\t<answer correct=\""<< (rfile.readLine()=="true"?"true":"false") <<"\">"<< esc(tmp) <<"</answer>\n";
+        // Answer D
+        if (rfile.readLine() != "[Q_ANSD]")return;
+        tmp=rfile.readLine();
+        answers << tmp;
+        if (db_version < 1.2) { if (rfile.readLine() != "[Q_ANSD_C]")return; }
+        sfile << "\t\t<answer correct=\""<< (rfile.readLine()=="true"?"true":"false") <<"\">"<< esc(tmp) <<"</answer>\n";
+    }
+    sfile << "\t</answers>\n";
+                // Statistics
+                if (db_version < 1.2) { if (rfile.readLine() != "[Q_ICNT]")return; }
+                else { if (rfile.readLine() != "[Q_ICCNT]")return; }
+                sfile << "<ads icnt=\""<< rfile.readLine()<<"\" ";
+                if (db_version < 1.2) { if (rfile.readLine() != "[Q_CCNT]")return; }
+               sfile << "ccnt=\""<< rfile.readLine()<<"\" ";
+                // Hidden
+                if (db_version >= 1.2) {
+                        if (rfile.readLine() != "[Q_HID]")return;
+                        sfile << "hidden=\""<< rfile.readLine()<<"\"/>\n";
+                    }else sfile <<"/>";
+                if (db_version > 1.25) {
+                        // SVG
+                        if (rfile.readLine() != "[Q_SVG]")return;
+                        sfile <<"\t<images>\n";
+                        int numsvgitems = rfile.readLine().toInt();
+                        for (int g = 0; g < numsvgitems; ++g) {
+                            db_buffer = rfile.readLine();
+                            QString im=rfile.readLine();
+                            QString g=imgtof(im, dir+"/img"+QString().setNum(ii++));
+                            if(g!=0){
+                            sfile<< "\t\t<image caption=\""<<esc(db_buffer)<< "\">" ;
+                            sfile << esc("/img/"+QFileInfo(g).fileName()) << "</image>\n";
+                            }
+                        }
+                        sfile <<"\t</images>\n\t\t</question>\n";
+                }
+                // End
+                if (db_version < 1.25) {
+                    if (rfile.readLine() != "[Q_END]")return;
+                }
+    }
+sfile<<"\t</questions>\n</database>";
+printf("Done\n");
+}
+
+
+
+void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName)
+{
+    QString dir(QFileInfo((openDBName)).dir().path());
+    if(dir.at(dir.length()-1)=='/' || dir.at(dir.length()-1)=='\\')dir.resize(dir.length()-1);
+    QDomDocument doc("db");
+     QFile ifile(openDBName);
+     if (!ifile.open(QIODevice::ReadOnly))
+         return;
+     if (!doc.setContent(&ifile)) {
+         ifile.close();
+         return;
+     }
+     ifile.close();
+
+     // печатает имена всех непосредственных потомков
+     // внешнего элемента.
+     QDomElement d = doc.documentElement();
+    QFile f(saveDBName);
+    if (!f.open(QFile::WriteOnly | QFile::Text))return;
+    QTextStream file(&f);
+    if(useCP1250)file.setCodec("CP 1250");else file.setCodec("UTF-8");
+double db_version=d.attribute("database_version", "1.4").toDouble();
+    file << "[ITEST_VERSION]\n" << d.attribute("itest_version", "1.42") << "\n";
+    file << "[ITEST_DB_VERSION]\n" << d.attribute("database_version", "1.4") << "\n";
+    file << "[DB_NAME]\n" << d.attribute("name", "Untitled") << "\n";
+    file << "[DB_DATE]\n" << d.attribute("created", "21.12.2012") << "\n";
+    file << "[DB_DATE_ULSD]\nfalse\n";
+    file << "[DB_COMMENTS]\n" << d.firstChildElement("comment").text() << "\n";
+    file << "[DB_QNUM]\n" << d.firstChildElement("questions").elementsByTagName("question").count() << "\n";
+    QString tmp(""), tmp2("");
+    for(int i=0;i<d.firstChildElement("flags").elementsByTagName("flag").count();i++){
+     QString x=d.firstChildElement("flags").elementsByTagName("flag").at(i).toElement().text();
+     if(x.isEmpty()){
+        tmp+="-";
+        tmp2+=QString("[DB_F%1]\n\n").arg(i);
+     }else{
+         tmp+="+";
+         tmp2+=QString("[DB_F%1]\n%2\n").arg(i).arg(x);
+     }
+    }
+    file << "[DB_SNUM]\n0\n";
+if(db_version>=1.35)file << "[DB_CNUM]\n0\n";
+    file << "[DB_FLAGS]\n" << tmp << "\n" <<tmp2;
+    file << "[DB_FLAGS_END]\n";
+
+    for(int i=0;i<d.firstChildElement("questions").elementsByTagName("question").count();i++){
+        QDomNode n=d.firstChildElement("questions").elementsByTagName("question").at(i);
+        file << "[Q_NAME]\n" << n.toElement().attribute("name", "unnamed question") << "\n[Q_FLAG]\n" << n.toElement().attribute("flag", "0") <<"\n";
+        if(db_version>=1.2)file << "[Q_GRP]\n" << n.toElement().attribute("group","") <<"\n";
+        file << (db_version>=1.2?"[Q_DIF]":"[Q_DIFFICULTY]") << "\n" << n.toElement().attribute("difficulty","0") << "\n";
+        file << "[Q_TEXT]\n" << n.firstChildElement("text").text() <<"\n";
+
+        if(db_version>=1.35){
+
+            int m=n.firstChildElement("answers").elementsByTagName("answer").count();
+            file << "[Q_ANS]\n" << n.firstChildElement("answers").attribute("selectiontype", "0") << "\n" << n.firstChildElement("answers").attribute("correctanswers","1")<<"\n"<<m<<"\n";
+            for(int i=0;i<m;i++)file<< n.firstChildElement("answers").elementsByTagName("answer").at(i).toElement().text() <<"\n";
+            file <<"[Q_EXPL]\n"<<n.firstChildElement("answers").firstChildElement("explain").text()<<"\n";
+        }else{
+            char x='A';
+            int m=n.firstChildElement("answers").elementsByTagName("answer").count();
+            if(m!=4)return;
+            for(int i=0;i<m;i++){
+
+                file << "[Q_ANS"<< x <<"]\n" << n.firstChildElement("answers").elementsByTagName("answer").at(i).toElement().text() <<"\n";
+                if(db_version<1.2)file << "[Q_ANS"<< x <<"_C]\n";
+                file <<n.firstChildElement("answers").elementsByTagName("answer").at(i).toElement().attribute("correct")<<"\n";
+                x+=1;
+            }
+        }
+
+        file << (db_version<1.2?"[Q_ICNT]":"[Q_ICCNT]")<<"\n"<< n.firstChildElement("ads").attribute("icnt") <<"\n"<<(db_version<1.2?"[Q_CCNT]\n":"")<< n.firstChildElement("ads").attribute("ccnt") <<"\n";
+    if(db_version>=1.2)file <<"[Q_HID]\n"<< n.firstChildElement("ads").attribute("hidden") <<"\n";
+    if(db_version>=1.25){
+        file<< "[Q_SVG]\n"<<n.firstChildElement("images").elementsByTagName("image").count()<<"\n";
+        for(int i=0;i<n.firstChildElement("images").elementsByTagName("image").count();i++){file<<n.firstChildElement("images").elementsByTagName("image").at(i).toElement().attribute("caption", "unnamed image") <<"\n";
+
+            QString h(n.firstChildElement("images").elementsByTagName("image").at(i).toElement().text());
+            if(!(h.at(0)=='\\' || h.at(0)=='/'))h="/"+h;
+            file << ftoimg(dir+h) <<"\n";}
+    }
+    if(db_version<1.25)file << "[Q_END]";
+    }
+
+    f.close();
+    printf("Done\n");
+}
