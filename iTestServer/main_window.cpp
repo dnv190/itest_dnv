@@ -19,7 +19,7 @@
 
 #include "../shared/about_widget.h"
 #include "main_window.h"
-
+#include "../shared/bitmapwidget.h"
 void MainWindow::errorInvalidDBFile(const QString & title, const QString & file, int error)
 {
     QMessageBox::critical(this, title, tr("Invalid database file: %1\nError %2.").arg(file).arg(error));
@@ -831,17 +831,32 @@ void MainWindow::langChanged()
 void MainWindow::previewSvg(QListWidgetItem * item)
 {
     SvgItem * svg_item = (SvgItem *)item;
-    if (!svg_item->isValid()) { return; }
-    QSvgWidget * svg_widget = new QSvgWidget;
-	svg_widget->setAttribute(Qt::WA_DeleteOnClose);
-	svg_widget->setWindowTitle(svg_item->text());
-	svg_widget->load(svg_item->svg().toUtf8());
-    QSize minimum_size = svg_widget->renderer()->defaultSize();
-	minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
-    svg_widget->setMinimumSize(minimum_size);
-    minimum_size.scale(256, 256, Qt::KeepAspectRatioByExpanding);
-    svg_widget->resize(minimum_size);
-	svg_widget->show();
+  //  if (!svg_item->isValid()) { return; }
+    QSvgRenderer temp(svg_item->svg().toUtf8());
+    if ( temp.isValid() )
+    {
+        QSize minimum_size;
+        QSvgWidget * svg_widget = new QSvgWidget;
+            svg_widget->setAttribute(Qt::WA_DeleteOnClose);
+            svg_widget->setWindowTitle(svg_item->text());
+            svg_widget->load(svg_item->svg().toUtf8());
+        minimum_size = svg_widget->renderer()->defaultSize();
+
+            minimum_size.scale(128, 128, Qt::KeepAspectRatioByExpanding);
+        svg_widget->setMinimumSize(minimum_size);
+        minimum_size.scale(256, 256, Qt::KeepAspectRatioByExpanding);
+        svg_widget->resize(minimum_size);
+            svg_widget->show();
+    }
+    else    //it's bitmap picture
+    {
+            BitmapWidget *bit_widget = new BitmapWidget;
+            bit_widget->setAttribute(Qt::WA_DeleteOnClose);
+            bit_widget->setWindowTitle(svg_item->text());
+            bit_widget->load(svg_item->svg().toUtf8());
+            bit_widget->show();
+    }
+
 }
 
 void MainWindow::about()

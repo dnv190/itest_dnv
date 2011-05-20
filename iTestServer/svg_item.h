@@ -39,6 +39,7 @@ public slots:
     bool isValid();
 
 private:
+    bool SetBitmap(QString);
     QString si_svg;
     bool si_valid;
 };

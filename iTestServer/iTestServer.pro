@@ -27,7 +27,8 @@ HEADERS      += main_window.h \
                 mtprogressbar.h \
                 answersedit.h \
                 print_engine.h \
-                mttextedit.h
+                mttextedit.h \
+    ../shared/bitmapwidget.h
 RESOURCES    += resources.qrc \
                 i18n.qrc
 SOURCES      += main.cpp \
@@ -52,7 +53,8 @@ SOURCES      += main.cpp \
                 class.cpp \
                 class_viewer.cpp \
                 session_wizard.cpp \
-                answersedit.cpp
+                answersedit.cpp \
+    ../shared/bitmapwidget.cpp
 QT           += network svg
 DEFINES      += ITESTSERVER
 win32 {
