@@ -28,7 +28,7 @@ void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDB
 QString imgtof(QString image, QString filename){
    QSvgRenderer r(QByteArray(image.toUtf8()));
 //image.resize(20);
-   //cout << image.toStdString() << endl<<filename.toStdString() << "***"<<endl;
+   cout << image.toStdString() << endl<<filename.toStdString() << "***"<<endl;
     if (r.isValid())
     {
 
@@ -78,30 +78,18 @@ QString ftoimg(QString filename){
         im.save(&buf, "JPEG");
 
         return ar.toBase64();
-
-//        QFile file(filename);
-//        if (!file.open(QFile::ReadOnly))return NULL;
-//        QDataStream o(&file);
-//        char *buf=new char[file.size()];
-//        uint sz=(uint)(file.size());
-//        printf("!%d!", sz);
-//        o.readRawData(buf, sz);
-//        QByteArray ar(buf);
-//        delete[]buf;
-//        //cout<< artoStdString();
-//        return ar.toBase64();
     }
 };
 
 int main(int argc, char *argv[])
 {
 
-if(strcmp(argv[1],"-u")==0){
+if(argc>1 && strcmp(argv[1],"-u")==0){
  bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
  bool ptflag=argc>=5 &&(strcmp(argv[4], "-pt")==0 || strcmp(argv[5], "-pt")==0);
  upgrade(argv[2],cpflag,argv[3],ptflag);
 }else
-    if(strcmp(argv[1], "-d")==0){
+    if(argc>1 && strcmp(argv[1], "-d")==0){
         bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
         downgrade(argv[2],cpflag,argv[3]);
     }else printf("\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u \"old-format-filename\" \"new-format-filename\" [-ocp] [-pt]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using, -pt flag means comments and questions text to be converted into plain text)\n\n\tconverter -u \"new-format-filename\" \"old-format-filename\" [-oc]\n\t\tDowngrading file format to old n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!\n");
