@@ -34,7 +34,7 @@ QListWidgetItem(0, QListWidgetItem::UserType)
 bool SvgItem::setSvg(QString svg)
 {
 
-   // svg.remove("\n");
+    svg.remove("\n");
     QSvgRenderer svgrenderer(svg.toUtf8());
     if (!svgrenderer.isValid())
     {

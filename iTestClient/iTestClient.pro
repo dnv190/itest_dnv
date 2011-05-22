@@ -12,7 +12,8 @@ HEADERS      += main_window.h \
                 mtmultisvgwidget.h \
                 flowlayout.h \
                 question_widget.h \
-                answersview.h
+                answersview.h \
+    ../shared/bitmapwidget.h
 RESOURCES    += resources.qrc \
                 i18n.qrc
 SOURCES      += main.cpp \
@@ -26,7 +27,8 @@ SOURCES      += main.cpp \
                 ../shared/pass_mark.cpp \
                 flowlayout.cpp \
                 question_widget.cpp \
-                answersview.cpp
+                answersview.cpp \
+    ../shared/bitmapwidget.cpp
 QT           += network svg
 DEFINES      += ITESTCLIENT
 win32 {
