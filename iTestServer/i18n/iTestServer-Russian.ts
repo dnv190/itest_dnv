@@ -3774,8 +3774,8 @@ Please choose a different group.</source>
         <location filename="../main_window_v2.ui" line="802"/>
         <location filename="../print_engine.cpp" line="1026"/>
         <location filename="../ui_main_window_v2.cpp" line="3257"/>
-        <source>Attachments (SVG):</source>
-        <translation>Приложения (SVG):</translation>
+        <source>Attachments :</source>
+        <translation>Приложения :</translation>
     </message>
     <message>
         <location filename="../main_window_v2.ui" line="809"/>
@@ -3786,8 +3786,8 @@ Please choose a different group.</source>
         <location filename="../questions.cpp" line="548"/>
         <location filename="../ui_main_window_v2.cpp" line="3055"/>
         <location filename="../ui_main_window_v2.cpp" line="3259"/>
-        <source>Add SVG</source>
-        <translation>Добавить SVG</translation>
+        <source>Add</source>
+        <translation>Добавить</translation>
     </message>
     <message>
         <location filename="../main_window_v2.ui" line="812"/>
@@ -3807,8 +3807,8 @@ Please choose a different group.</source>
         <location filename="../questions.cpp" line="557"/>
         <location filename="../ui_main_window_v2.cpp" line="3065"/>
         <location filename="../ui_main_window_v2.cpp" line="3266"/>
-        <source>Remove SVG</source>
-        <translation>Удалить SVG</translation>
+        <source>Remove</source>
+        <translation>Удалить</translation>
     </message>
     <message>
         <location filename="../main_window_v2.ui" line="835"/>
@@ -3835,8 +3835,8 @@ Please choose a different group.</source>
         <location filename="../main_window_v2.ui" line="4942"/>
         <location filename="../ui_main_window_v2.cpp" line="3075"/>
         <location filename="../ui_main_window_v2.cpp" line="3273"/>
-        <source>Edit SVG</source>
-        <translation>Отредактировать SVG</translation>
+        <source>Edit</source>
+        <translation>Отредактировать</translation>
     </message>
     <message>
         <location filename="../main_window_v2.ui" line="858"/>
@@ -3863,8 +3863,8 @@ Please choose a different group.</source>
         <location filename="../questions.cpp" line="632"/>
         <location filename="../ui_main_window_v2.cpp" line="3085"/>
         <location filename="../ui_main_window_v2.cpp" line="3280"/>
-        <source>Export SVG</source>
-        <translation>Экспортировать SVG</translation>
+        <source>Export</source>
+        <translation>Экспортировать</translation>
     </message>
     <message>
         <location filename="../main_window_v2.ui" line="881"/>

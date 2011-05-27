@@ -799,14 +799,14 @@
                    <item>
                     <widget class="QLabel" name="SQSVGLabel">
                      <property name="text">
-                      <string>Attachments (SVG):</string>
+                      <string>Attachments :</string>
                      </property>
                     </widget>
                    </item>
                    <item>
                     <widget class="QToolButton" name="tbtnAddSVG">
                      <property name="toolTip">
-                      <string>Add SVG</string>
+                      <string>Add </string>
                      </property>
                      <property name="statusTip">
                       <string>Add an attachment</string>
@@ -829,7 +829,7 @@
                    <item>
                     <widget class="QToolButton" name="tbtnRemoveSVG">
                      <property name="toolTip">
-                      <string>Remove SVG</string>
+                      <string>Remove </string>
                      </property>
                      <property name="statusTip">
                       <string>Remove the selected attachment</string>
@@ -852,7 +852,7 @@
                    <item>
                     <widget class="QToolButton" name="tbtnEditSVG">
                      <property name="toolTip">
-                      <string>Edit SVG</string>
+                      <string>Edit </string>
                      </property>
                      <property name="statusTip">
                       <string>Edit the selected attachment</string>
@@ -875,7 +875,7 @@
                    <item>
                     <widget class="QToolButton" name="tbtnExportSVG">
                      <property name="toolTip">
-                      <string>Export SVG</string>
+                      <string>Export</string>
                      </property>
                      <property name="statusTip">
                       <string>Export the selected attachment</string>
@@ -4910,7 +4910,7 @@
      <normaloff>:/images/images/list-add.png</normaloff>:/images/images/list-add.png</iconset>
    </property>
    <property name="text">
-    <string>Add SVG</string>
+    <string>Add </string>
    </property>
    <property name="toolTip">
     <string>Add an attachment</string>
@@ -4928,7 +4928,7 @@
      <normaloff>:/images/images/list-remove.png</normaloff>:/images/images/list-remove.png</iconset>
    </property>
    <property name="text">
-    <string>Remove SVG</string>
+    <string>Remove </string>
    </property>
    <property name="toolTip">
     <string>Remove the selected attachment</string>
@@ -4946,7 +4946,7 @@
      <normaloff>:/images/images/document-properties.png</normaloff>:/images/images/document-properties.png</iconset>
    </property>
    <property name="text">
-    <string>Edit SVG</string>
+    <string>Edit </string>
    </property>
    <property name="toolTip">
     <string>Edit the selected attachment</string>
@@ -4964,7 +4964,7 @@
      <normaloff>:/images/images/document-save.png</normaloff>:/images/images/document-save.png</iconset>
    </property>
    <property name="text">
-    <string>Export SVG</string>
+    <string>Export </string>
    </property>
    <property name="toolTip">
     <string>Export the selected attachment</string>
