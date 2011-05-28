@@ -541,7 +541,7 @@ void MainWindow::addSvg()
 {
     if (!LQListWidget->currentIndex().isValid()) { return; }
     //QMessageBox::show(QString("fuck"))
-    QString file_name = QFileDialog::getOpenFileName(this, tr("Add attachment"), "", tr("Scalable Vector Graphics (*.svg);;Bitmaps (*.jpg*.png*.jpeg*.bmp);;All files (*.*)"));
+    QString file_name = QFileDialog::getOpenFileName(this, tr("Add attachment"), "", tr("Scalable Vector Graphics (*.svg);;Bitmaps (*.jpg *.png *.jpeg *.bmp);;All files (*.*)"));
 
 
     if( file_name.endsWith(".SVG", Qt::CaseInsensitive))//check for svg format
