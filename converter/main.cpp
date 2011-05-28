@@ -1,4 +1,3 @@
-#include <QtGui/QTextEdit>
 #include <QtGui/QImage>
 #include <QtCore/QCoreApplication>
 #include <QtXml>
@@ -21,93 +20,109 @@
 #include <iostream>
 using namespace std;
 //opendbname - old db
-void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName, bool ptflag);
+void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName);
 //savename - old db
 void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName);
 //returns newfilename
 QString imgtof(QString image, QString filename){
    QSvgRenderer r(QByteArray(image.toUtf8()));
-//image.resize(20);
-   cout << image.toStdString() << endl<<filename.toStdString() << "***"<<endl;
     if (r.isValid())
     {
-
     //if()
     QFile file(filename+".svg");
+
     if (!file.open(QFile::WriteOnly | QFile::Text))return NULL;
     QTextStream o(&file);
-
+o.setCodec("UTF-8");
     o << image;
     return QString(filename+".svg");
     }
     else
     {
     QImage im;
+
     QByteArray array = QByteArray::fromBase64(image.toUtf8());
     if( !im.loadFromData(array))
     {
     return NULL;
     }
-    im.save(filename+".jpg");
 
-    return QString(filename+".jpg");
+    im.save(filename+".png", "PNG");
+
+    return QString(filename+".png");
     }
 };
 
 QString ftoimg(QString filename){
 
-   QString result("");  QSvgRenderer r;
-    try{
-   r.load(filename);}catch(...){};
+   QString result("");
+QFile x(filename); x.open(QFile::ReadOnly | QFile::Text); QTextStream y(&x);QString z=y.readAll();x.close();
+    QSvgRenderer r(z.toUtf8());
     if (r.isValid())
     {
-
+    //if()
     QFile file(filename);
     if (!file.open(QFile::ReadOnly | QFile::Text))return NULL;
     QTextStream o(&file);
 
     result=o.readLine();
-    file.close();
     return result;
     }
     else
     {
-        QImage im(filename);
-        QByteArray ar;
-        QBuffer buf(&ar);
-        im.save(&buf, "JPEG");
-
-        return ar.toBase64();
+//cout << qPrintable(filename) << endl;
+        QFile file(filename);
+        if (!file.open(QFile::ReadOnly))return 0;
+        QDataStream o(&file);
+        uint sz=(uint)file.size();
+        char *buf=new char[sz];
+        o.readRawData(buf, sz);
+        QByteArray ar(buf,sz);
+        return  QString(ar.toBase64());
     }
 };
 
 int main(int argc, char *argv[])
 {
+    if(argv[1][1]=='u'){
+    printf("Converting to XML format\n");
+    upgrade(argv[2],argc==4, argv[3]);}else
+    if(argv[1][1]=='d'){
+printf("Converting to text-like DB format\n");
+downgrade(argv[2],argc==4, argv[3]);}else{
+printf("\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u oldformatfilename newformatfilename [-oc]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using)\n\tconverter -u newformatfilename oldformatfilename[-oc]\n\t\tDowngrading file format to old \\n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!");
+}
+}
 
-if(argc>1 && strcmp(argv[1],"-u")==0){
- bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
- bool ptflag=argc>=5 &&(strcmp(argv[4], "-pt")==0 || strcmp(argv[5], "-pt")==0);
- upgrade(argv[2],cpflag,argv[3],ptflag);
-}else
-    if(argc>1 && strcmp(argv[1], "-d")==0){
-        bool cpflag=argc>=5 &&strcmp(argv[4],"-ocp")==0;
-        downgrade(argv[2],cpflag,argv[3]);
-    }else printf("\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u \"old-format-filename\" \"new-format-filename\" [-ocp] [-pt]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using, -pt flag means comments and questions text to be converted into plain text)\n\n\tconverter -u \"new-format-filename\" \"old-format-filename\" [-oc]\n\t\tDowngrading file format to old n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!\n");
-return 0;
+QString bitstochars(int b){
+    int x=b; char i='A';
+    QString res("");
+    while(x){
+        if(x%2)res+=i;
+        x=x/2;i++;
+    }
+    return res;
+}
+
+int charstobits(QString b){
+    int res=0;
+    for(char i='A', x=1;i<='I';i++, x*=2)if(b.indexOf(QChar(i))>-1)res+=x;
+    return res;
 }
 
 QString esc(QString toesc){
     return toesc.replace(">","&gt;").replace("<","&lt;");
 }
 
+void dbg(QString val){
+FILE *f=0;
+f=fopen("F:\\itest_dnv\\log.txt",  "a+t");
+if(!f)f=fopen("F:\\itest_dnv\\log.txt",  "w+t");
+fprintf(f, "%s\n", qPrintable(val));
+fclose(f);
+} ;
 
-QString toplain(QString html){
-QTextDocument doc;
-doc.setHtml(html);
-return doc.toPlainText();
-};
-
-void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName, bool ptflag)
+void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName)
 {
 
     QFileInfo x(saveDBName);
@@ -149,7 +164,7 @@ double db_version=tmp.toDouble();
 sfile << "database_version=\"" << tmp << "\" ";
 int ii=0;
         if (!useCP1250) {
-                if ( db_version == 1.0) { upgrade(openDBName, true, saveDBName, ptflag);return; }
+                if ( db_version == 1.0) {upgrade(openDBName, true, saveDBName);return; }
         }
 
     if (rfile.readLine() != "[DB_NAME]")return;
@@ -164,10 +179,7 @@ int ii=0;
         (rfile.readLine() == "true");
 if (rfile.readLine() != "[DB_COMMENTS]")return;
 // Database comments
-if(ptflag)
-sfile << "\t<comment>" << toplain(rfile.readLine()) << "</comment>\n";
-else sfile << "\t<comment>" << esc(rfile.readLine()) << "</comment>\n";
-
+sfile << "\t<comment>" << esc(rfile.readLine()) << "</comment>\n";
 
 if (rfile.readLine() != "[DB_QNUM]")return;
 // Question number
@@ -226,15 +238,13 @@ for (int i = 0; i < db_qnum; ++i) {
                 sfile << "difficulty=\"" << esc(rfile.readLine()) <<"\">\n";
                 // Question text
                 if (rfile.readLine() != "[Q_TEXT]")return;
-                if(ptflag)
-                    sfile << "\t\t\t<text>" << toplain(rfile.readLine()) <<"</text>\n";
-                else  sfile << "\t\t\t<text>" << esc(rfile.readLine()) <<"</text>\n";
+                sfile << "\t\t\t<text>" << esc(rfile.readLine()) <<"</text>\n";
 sfile << "\t<answers";
     if (db_version >= 1.35) {
         // Answers
         if (rfile.readLine() != "[Q_ANS]")return;
         sfile << " selectiontype=\"" << esc(rfile.readLine()) <<"\" ";
-        sfile << " correctanswers=\"" << esc(rfile.readLine()) <<"\">\n";
+        sfile << " correctanswers=\"" << bitstochars(rfile.readLine().toInt()).toAscii() <<"\">\n";
         int numanswers = rfile.readLine().toInt();
                         for (int a = 0; a < numanswers; ++a) { tmp=rfile.readLine();answers << tmp;sfile <<"\t\t\t<answer>" << esc(tmp) << "</answer>\n"; }
         // Explanation
@@ -285,12 +295,9 @@ sfile << "\t<answers";
                         int numsvgitems = rfile.readLine().toInt();
                         for (int g = 0; g < numsvgitems; ++g) {
                             db_buffer = rfile.readLine();
-                            QString im=rfile.readLine();
-                            QString g=imgtof(im, dir+"/img"+QString().setNum(ii++));
-                            if(g!=0){
                             sfile<< "\t\t<image caption=\""<<esc(db_buffer)<< "\">" ;
-                            sfile << esc("/img/"+QFileInfo(g).fileName()) << "</image>\n";
-                            }
+                            QString im=rfile.readLine();
+                            sfile << esc("/img/"+QFileInfo(imgtof(im, dir+"/img"+QString("%1").arg(ii++))).fileName()) << "</image>\n";
                         }
                         sfile <<"\t</images>\n\t\t</question>\n";
                 }
@@ -360,7 +367,7 @@ if(db_version>=1.35)file << "[DB_CNUM]\n0\n";
         if(db_version>=1.35){
 
             int m=n.firstChildElement("answers").elementsByTagName("answer").count();
-            file << "[Q_ANS]\n" << n.firstChildElement("answers").attribute("selectiontype", "0") << "\n" << n.firstChildElement("answers").attribute("correctanswers","1")<<"\n"<<m<<"\n";
+            file << "[Q_ANS]\n" << n.firstChildElement("answers").attribute("selectiontype", "0") << "\n" << QString("%1").arg(charstobits(n.firstChildElement("answers").attribute("correctanswers","1")))<<"\n"<<m<<"\n";
             for(int i=0;i<m;i++)file<< n.firstChildElement("answers").elementsByTagName("answer").at(i).toElement().text() <<"\n";
             file <<"[Q_EXPL]\n"<<n.firstChildElement("answers").firstChildElement("explain").text()<<"\n";
         }else{
