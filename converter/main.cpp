@@ -25,7 +25,7 @@ void upgrade(const QString & openDBName, bool useCP1250, const QString &saveDBNa
 void downgrade(const QString & openDBName, bool useCP1250, const QString &saveDBName);
 //returns newfilename
 QString imgtof(QString image, QString filename){
-   QSvgRenderer r(QByteArray(image.toUtf8()));
+   QSvgRenderer r(QByteArray(image.toAscii()));
     if (r.isValid())
     {
     //if()
@@ -84,13 +84,16 @@ QFile x(filename); x.open(QFile::ReadOnly | QFile::Text); QTextStream y(&x);QStr
 
 int main(int argc, char *argv[])
 {
+
+    char *s="\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u oldformatfilename newformatfilename [-oc]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using)\n\tconverter -u newformatfilename oldformatfilename[-oc]\n\t\tDowngrading file format to old \\n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!\n";
+   if(argc<2)printf(s);else
     if(argv[1][1]=='u'){
     printf("Converting to XML format\n");
-    upgrade(argv[2],argc==4, argv[3]);}else
+    upgrade(argv[2],argc==5, argv[3]);}else
     if(argv[1][1]=='d'){
 printf("Converting to text-like DB format\n");
-downgrade(argv[2],argc==4, argv[3]);}else{
-printf("\tThis program converts iTest database files and should be run in one of these ways:\n\n\tconverter -u oldformatfilename newformatfilename [-oc]\n\t\tUpgrading file format to xml(-oc flag is for cp1250 using)\n\tconverter -u newformatfilename oldformatfilename[-oc]\n\t\tDowngrading file format to old \\n-style format(-oc flag is for cp1250 using)\n\n\tNote! Files' names should not be equal!");
+downgrade(argv[2],argc==5, argv[3]);}else{
+printf(s);
 }
 }
 
@@ -148,7 +151,7 @@ return;
     }
      // PROGRESS >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     QTextStream rfile(&file2);
-        if (useCP1250) {         sfile.setCodec("CP 1250");sfile << "CP1250\"?>\n";
+        if (useCP1250) {         sfile.setCodec("CP 1250");sfile << "CP 1250\"?>\n";
 rfile.setCodec("CP 1250"); }
         else {         sfile.setCodec("UTF-8");
 rfile.setCodec("UTF-8");sfile << "UTF-8\"?>\n"; }
