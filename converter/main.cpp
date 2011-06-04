@@ -249,7 +249,7 @@ sfile << "\t<answers";
         sfile << " selectiontype=\"" << esc(rfile.readLine()) <<"\" ";
         sfile << " correctanswers=\"" << bitstochars(rfile.readLine().toInt()).toAscii() <<"\">\n";
         int numanswers = rfile.readLine().toInt();
-                        for (int a = 0; a < numanswers; ++a) { tmp=rfile.readLine();answers << tmp;sfile <<"\t\t\t<answer>" << esc(tmp) << "</answer>\n"; }
+                        for (int a = 0; a < numanswers; ++a) { tmp=rfile.readLine();answers << tmp;sfile <<"\t\t\t<answer name=\""<< (char)('A'+a) <<"\">" << esc(tmp) << "</answer>\n"; }
         // Explanation
         if (rfile.readLine() != "[Q_EXPL]")return;
         sfile<< "\t\t<explain>"<<esc(rfile.readLine())<<"</explain>\n";
@@ -371,7 +371,11 @@ if(db_version>=1.35)file << "[DB_CNUM]\n0\n";
 
             int m=n.firstChildElement("answers").elementsByTagName("answer").count();
             file << "[Q_ANS]\n" << n.firstChildElement("answers").attribute("selectiontype", "0") << "\n" << QString("%1").arg(charstobits(n.firstChildElement("answers").attribute("correctanswers","1")))<<"\n"<<m<<"\n";
-            for(int i=0;i<m;i++)file<< n.firstChildElement("answers").elementsByTagName("answer").at(i).toElement().text() <<"\n";
+
+            for(int i=0;i<m;i++)
+                for(int j=0;j<m;j++)if(n.firstChildElement("answers").elementsByTagName("answer").at(j).attributes().namedItem("name").toAttr().value()[0]==(char)('A'+i))
+                file<< n.firstChildElement("answers").elementsByTagName("answer").at(j).toElement().text() <<"\n";
+
             file <<"[Q_EXPL]\n"<<n.firstChildElement("answers").firstChildElement("explain").text()<<"\n";
         }else{
             char x='A';
